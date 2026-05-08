@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>テニスダブルス 対戦カード</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, 'Helvetica Neue', Arial, sans-serif;
+      background: linear-gradient(160deg, #1b4332 0%, #2d6a4f 40%, #40916c 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 20px 16px 40px;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 420px;
+    }
+
+    .screen { display: none; }
+    .screen.active { display: block; }
+
+    .page-title {
+      color: #fff;
+      text-align: center;
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin-bottom: 20px;
+      text-shadow: 0 2px 6px rgba(0,0,0,0.3);
+      letter-spacing: 0.05em;
+    }
+
+    .card {
+      background: rgba(255,255,255,0.96);
+      border-radius: 18px;
+      padding: 24px 20px;
+      box-shadow: 0 6px 24px rgba(0,0,0,0.25);
+      margin-bottom: 14px;
+    }
+
+    .card-title {
+      color: #1b4332;
+      font-size: 1rem;
+      font-weight: 700;
+      margin-bottom: 16px;
+      text-align: center;
+    }
+
+    /* ---- Count select ---- */
+    .count-buttons {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 8px;
+    }
+
+    .btn-count {
+      padding: 16px 4px;
+      background: linear-gradient(135deg, #2d6a4f, #52b788);
+      color: #fff;
+      border: none;
+      border-radius: 12px;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform 0.1s, opacity 0.1s;
+    }
+    .btn-count:active { transform: scale(0.94); opacity: 0.9; }
+
+    /* ---- Name inputs ---- */
+    .name-inputs { display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px; }
+
+    .name-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .name-badge {
+      min-width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #2d6a4f, #52b788);
+      color: #fff;
+      font-size: 0.85rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .name-input {
+      flex: 1;
+      padding: 11px 14px;
+      border: 2px solid #b7e4c7;
+      border-radius: 10px;
+      font-size: 1rem;
+      background: #f8fffe;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .name-input:focus {
+      border-color: #40916c;
+      box-shadow: 0 0 0 3px rgba(64,145,108,0.12);
+    }
+
+    /* ---- Buttons ---- */
+    .btn-primary {
+      width: 100%;
+      padding: 16px;
+      background: linear-gradient(135deg, #2d6a4f, #40916c);
+      color: #fff;
+      border: none;
+      border-radius: 12px;
+      font-size: 1.05rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform 0.1s, opacity 0.1s;
+      letter-spacing: 0.03em;
+    }
+    .btn-primary:active { transform: scale(0.98); opacity: 0.92; }
+
+    .btn-back {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      color: rgba(255,255,255,0.85);
+      background: rgba(255,255,255,0.15);
+      border: 1.5px solid rgba(255,255,255,0.35);
+      border-radius: 10px;
+      padding: 10px 16px;
+      font-size: 0.9rem;
+      cursor: pointer;
+      margin-bottom: 12px;
+      transition: background 0.2s;
+    }
+    .btn-back:active { background: rgba(255,255,255,0.25); }
+
+    /* ---- Match display ---- */
+    .round-counter {
+      text-align: center;
+      font-size: 0.8rem;
+      color: #52b788;
+      margin-bottom: 6px;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+    }
+
+    .match-label {
+      text-align: center;
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.15em;
+      color: #74c69d;
+      text-transform: uppercase;
+      margin-bottom: 14px;
+    }
+
+    .teams-row {
+      display: flex;
+      align-items: stretch;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .team-card {
+      flex: 1;
+      background: linear-gradient(145deg, #d8f3dc, #b7e4c7);
+      border-radius: 14px;
+      padding: 16px 12px;
+      text-align: center;
+    }
+
+    .team-label {
+      font-size: 0.7rem;
+      font-weight: 700;
+      color: #2d6a4f;
+      letter-spacing: 0.1em;
+      margin-bottom: 10px;
+    }
+
+    .team-names {
+      font-size: 1rem;
+      font-weight: 700;
+      color: #1b4332;
+      line-height: 1.8;
+      word-break: break-all;
+    }
+
+    .vs-badge {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1rem;
+      font-weight: 800;
+      color: #74c69d;
+      flex-shrink: 0;
+    }
+
+    .divider {
+      border: none;
+      border-top: 1.5px solid #b7e4c7;
+      margin: 2px 0 14px;
+    }
+
+    .waiting-label {
+      font-size: 0.75rem;
+      color: #6c757d;
+      margin-bottom: 8px;
+      font-weight: 600;
+    }
+
+    .waiting-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .chip {
+      background: #e9ecef;
+      border-radius: 20px;
+      padding: 6px 14px;
+      font-size: 0.9rem;
+      color: #495057;
+      font-weight: 500;
+    }
+
+    /* ---- Next / Reset ---- */
+    .btn-next {
+      width: 100%;
+      padding: 18px;
+      background: linear-gradient(135deg, #d62828, #e63946);
+      color: #fff;
+      border: none;
+      border-radius: 14px;
+      font-size: 1.1rem;
+      font-weight: 700;
+      cursor: pointer;
+      margin-bottom: 14px;
+      box-shadow: 0 4px 16px rgba(230,57,70,0.35);
+      transition: transform 0.1s, opacity 0.1s;
+      letter-spacing: 0.03em;
+    }
+    .btn-next:active { transform: scale(0.98); opacity: 0.92; }
+
+    .btn-reset {
+      display: block;
+      width: 100%;
+      padding: 13px;
+      background: rgba(255,255,255,0.12);
+      color: rgba(255,255,255,0.8);
+      border: 1.5px solid rgba(255,255,255,0.25);
+      border-radius: 10px;
+      font-size: 0.9rem;
+      cursor: pointer;
+      text-align: center;
+      transition: background 0.2s;
+    }
+    .btn-reset:active { background: rgba(255,255,255,0.22); }
+
+    /* ---- Stats ---- */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+    }
+
+    .stat-item {
+      background: linear-gradient(145deg, #d8f3dc, #b7e4c7);
+      border-radius: 12px;
+      padding: 12px 10px;
+      text-align: center;
+    }
+
+    .stat-name {
+      font-size: 0.85rem;
+      color: #2d6a4f;
+      font-weight: 700;
+      margin-bottom: 4px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .stat-count {
+      font-size: 1.5rem;
+      font-weight: 800;
+      color: #1b4332;
+    }
+
+    .stat-unit {
+      font-size: 0.75rem;
+      font-weight: 500;
+      color: #52b788;
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+
+  <!-- ==================== SETUP SCREEN ==================== -->
+  <div id="setup-screen" class="screen active">
+    <p class="page-title">🎾 テニスダブルス</p>
+
+    <!-- Step 1: 人数選択 -->
+    <div id="count-step">
+      <div class="card">
+        <p class="card-title">参加人数を選んでください</p>
+        <div class="count-buttons">
+          <button class="btn-count" onclick="selectCount(4)">4人</button>
+          <button class="btn-count" onclick="selectCount(5)">5人</button>
+          <button class="btn-count" onclick="selectCount(6)">6人</button>
+          <button class="btn-count" onclick="selectCount(7)">7人</button>
+          <button class="btn-count" onclick="selectCount(8)">8人</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 2: 名前入力 -->
+    <div id="name-input-step" style="display:none;">
+      <button class="btn-back" onclick="backToCount()">← 人数選択に戻る</button>
+      <div class="card">
+        <p class="card-title" id="name-step-title">名前を入力してください</p>
+        <div class="name-inputs" id="name-inputs-container"></div>
+        <button class="btn-primary" onclick="startGame()">試合開始</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== GAME SCREEN ==================== -->
+  <div id="game-screen" class="screen">
+    <p class="page-title">🎾 テニスダブルス</p>
+
+    <div class="card">
+      <p class="round-counter" id="round-counter">第 1 試合</p>
+      <p class="match-label">現在の対戦カード</p>
+      <div class="teams-row">
+        <div class="team-card">
+          <p class="team-label">TEAM A</p>
+          <div class="team-names" id="team-a"></div>
+        </div>
+        <div class="vs-badge">VS</div>
+        <div class="team-card">
+          <p class="team-label">TEAM B</p>
+          <div class="team-names" id="team-b"></div>
+        </div>
+      </div>
+      <div id="waiting-section" style="display:none;">
+        <hr class="divider">
+        <p class="waiting-label">待機中</p>
+        <div class="waiting-chips" id="waiting-players"></div>
+      </div>
+    </div>
+
+    <button class="btn-next" onclick="nextMatch()">次の対戦へ →</button>
+
+    <div class="card">
+      <p class="card-title">出場回数</p>
+      <div class="stats-grid" id="stats-grid"></div>
+    </div>
+
+    <button class="btn-reset" onclick="resetGame()">最初からやり直す</button>
+  </div>
+
+</div>
+<script>
+  let playerCount = 0;
+  let playerNames = [];
+  let counts = [];
+  let lastPlayedRound = [];
+  let roundNum = 0;
+  let onCourt = [];
+  let pairRotation = 0;
+
+  function selectCount(n) {
+    playerCount = n;
+    document.getElementById('count-step').style.display = 'none';
+    document.getElementById('name-step-title').textContent = `名前を入力（${n}人）`;
+
+    const container = document.getElementById('name-inputs-container');
+    container.innerHTML = '';
+    for (let i = 0; i < n; i++) {
+      container.innerHTML += `
+        <div class="name-row">
+          <div class="name-badge">${i + 1}</div>
+          <input class="name-input" id="name-${i}" type="text"
+                 placeholder="プレイヤー${i + 1}" maxlength="8">
+        </div>
+      `;
+    }
+    document.getElementById('name-input-step').style.display = 'block';
+    document.getElementById('name-0').focus();
+  }
+
+  function backToCount() {
+    document.getElementById('name-input-step').style.display = 'none';
+    document.getElementById('count-step').style.display = 'block';
+  }
+
+  function playerName(i) {
+    return playerNames[i] || `${i + 1}番`;
+  }
+
+  function startGame() {
+    playerNames = [];
+    for (let i = 0; i < playerCount; i++) {
+      playerNames.push(document.getElementById(`name-${i}`).value.trim());
+    }
+
+    counts = new Array(playerCount).fill(0);
+    lastPlayedRound = new Array(playerCount).fill(0);
+    roundNum = 0;
+    pairRotation = 0;
+    onCourt = [0, 1, 2, 3];
+
+    document.getElementById('setup-screen').classList.remove('active');
+    document.getElementById('game-screen').classList.add('active');
+
+    renderMatch();
+    renderStats();
+  }
+
+  function selectNextPlayers() {
+    const all = Array.from({ length: playerCount }, (_, i) => i);
+    all.sort((a, b) =>
+      counts[a] - counts[b] ||
+      lastPlayedRound[a] - lastPlayedRound[b] ||
+      a - b
+    );
+    return all.slice(0, 4);
+  }
+
+  function nextMatch() {
+    roundNum++;
+    onCourt.forEach(i => {
+      counts[i]++;
+      lastPlayedRound[i] = roundNum;
+    });
+    pairRotation++;
+    onCourt = selectNextPlayers();
+    renderMatch();
+    renderStats();
+  }
+
+  function getTeams() {
+    const patterns = [
+      { a: [0, 1], b: [2, 3] },
+      { a: [0, 2], b: [1, 3] },
+      { a: [0, 3], b: [1, 2] }
+    ];
+    const p = patterns[pairRotation % 3];
+    return {
+      teamA: [onCourt[p.a[0]], onCourt[p.a[1]]],
+      teamB: [onCourt[p.b[0]], onCourt[p.b[1]]]
+    };
+  }
+
+  function renderMatch() {
+    document.getElementById('round-counter').textContent = `第 ${roundNum + 1} 試合`;
+
+    const { teamA, teamB } = getTeams();
+    document.getElementById('team-a').innerHTML =
+      `${playerName(teamA[0])}<br>${playerName(teamA[1])}`;
+    document.getElementById('team-b').innerHTML =
+      `${playerName(teamB[0])}<br>${playerName(teamB[1])}`;
+
+    const waiting = Array.from({ length: playerCount }, (_, i) => i)
+      .filter(i => !onCourt.includes(i));
+
+    const waitingSection = document.getElementById('waiting-section');
+    if (waiting.length > 0) {
+      waitingSection.style.display = 'block';
+      document.getElementById('waiting-players').innerHTML =
+        waiting.map(i => `<span class="chip">${playerName(i)}</span>`).join('');
+    } else {
+      waitingSection.style.display = 'none';
+    }
+  }
+
+  function renderStats() {
+    document.getElementById('stats-grid').innerHTML =
+      Array.from({ length: playerCount }, (_, i) => `
+        <div class="stat-item">
+          <div class="stat-name">${playerName(i)}</div>
+          <div class="stat-count">${counts[i]}<span class="stat-unit"> 回</span></div>
+        </div>
+      `).join('');
+  }
+
+  function resetGame() {
+    document.getElementById('game-screen').classList.remove('active');
+    document.getElementById('name-input-step').style.display = 'none';
+    document.getElementById('count-step').style.display = 'block';
+    document.getElementById('setup-screen').classList.add('active');
+  }
+</script>
+</body>
+</html>
