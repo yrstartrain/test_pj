@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>空と約束 倉本千奈 固有札シミュレータ</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, 'Helvetica Neue', Arial, sans-serif;
+      background: linear-gradient(160deg, #0a1a3a 0%, #1a3a6e 50%, #2a5fa8 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 24px 16px 48px;
+    }
+
+    .container { width: 100%; max-width: 420px; }
+
+    .page-title {
+      color: #fff;
+      text-align: center;
+      font-size: 1.3rem;
+      font-weight: 800;
+      margin-bottom: 4px;
+      text-shadow: 0 2px 12px rgba(100,180,255,0.5);
+      letter-spacing: 0.04em;
+    }
+
+    .page-subtitle {
+      color: rgba(160,210,255,0.75);
+      text-align: center;
+      font-size: 0.78rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      margin-bottom: 22px;
+    }
+
+    .card {
+      background: rgba(255,255,255,0.97);
+      border-radius: 20px;
+      padding: 24px 20px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.35);
+      margin-bottom: 14px;
+    }
+
+    .card-title {
+      color: #0d2b5e;
+      font-size: 0.92rem;
+      font-weight: 700;
+      margin-bottom: 18px;
+      text-align: center;
+      letter-spacing: 0.02em;
+    }
+
+    /* ---- Formula display ---- */
+    .formula-box {
+      background: linear-gradient(135deg, #e8f2ff, #d0e8ff);
+      border: 1.5px solid #a8cef7;
+      border-radius: 12px;
+      padding: 14px 16px;
+      text-align: center;
+      margin-bottom: 22px;
+    }
+
+    .formula-text {
+      font-size: 1rem;
+      font-weight: 700;
+      color: #0d2b5e;
+      letter-spacing: 0.03em;
+      font-family: 'Courier New', monospace;
+    }
+
+    .formula-desc {
+      font-size: 0.72rem;
+      color: #5a7aa8;
+      margin-top: 6px;
+      line-height: 1.5;
+    }
+
+    /* ---- Inputs ---- */
+    .param-list { display: flex; flex-direction: column; gap: 14px; margin-bottom: 20px; }
+
+    .param-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .param-badge {
+      min-width: 42px;
+      height: 42px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, #0d2b5e, #1a6fc4);
+      color: #fff;
+      font-size: 1rem;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      font-family: 'Courier New', monospace;
+      letter-spacing: 0.05em;
+    }
+
+    .param-info { flex: 1; }
+
+    .param-label {
+      font-size: 0.72rem;
+      color: #5a7aa8;
+      font-weight: 600;
+      margin-bottom: 4px;
+      letter-spacing: 0.04em;
+    }
+
+    .param-input {
+      width: 100%;
+      padding: 10px 14px;
+      border: 2px solid #b3d4f5;
+      border-radius: 10px;
+      font-size: 1rem;
+      font-weight: 600;
+      background: #f5f9ff;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      color: #0d2b5e;
+    }
+    .param-input:focus {
+      border-color: #1a6fc4;
+      box-shadow: 0 0 0 3px rgba(26,111,196,0.13);
+    }
+
+    /* ---- Calc button ---- */
+    .btn-calc {
+      width: 100%;
+      padding: 17px;
+      background: linear-gradient(135deg, #0d2b5e, #1a6fc4);
+      color: #fff;
+      border: none;
+      border-radius: 13px;
+      font-size: 1.05rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform 0.1s, opacity 0.1s;
+      letter-spacing: 0.04em;
+    }
+    .btn-calc:active { transform: scale(0.98); opacity: 0.9; }
+
+    /* ---- Result ---- */
+    .result-card {
+      background: linear-gradient(135deg, #0d2b5e, #1a5fa8);
+      border-radius: 20px;
+      padding: 24px 20px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.35);
+      margin-bottom: 14px;
+      text-align: center;
+      display: none;
+    }
+    .result-card.show { display: block; }
+
+    .result-label {
+      font-size: 0.78rem;
+      color: rgba(160,210,255,0.8);
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+
+    .result-value {
+      font-size: 2.8rem;
+      font-weight: 800;
+      color: #fff;
+      text-shadow: 0 0 20px rgba(100,180,255,0.6);
+      letter-spacing: 0.02em;
+      line-height: 1.1;
+    }
+
+    .result-unit {
+      font-size: 1rem;
+      font-weight: 500;
+      color: rgba(160,210,255,0.7);
+      margin-top: 4px;
+    }
+
+    .result-breakdown {
+      background: rgba(255,255,255,0.08);
+      border-radius: 10px;
+      padding: 12px 14px;
+      margin-top: 16px;
+      font-size: 0.82rem;
+      color: rgba(200,230,255,0.85);
+      line-height: 1.7;
+      text-align: left;
+      font-family: 'Courier New', monospace;
+    }
+
+    /* ---- Error ---- */
+    .error-msg {
+      background: #fdecea;
+      border: 1.5px solid #f5a5a5;
+      border-radius: 10px;
+      padding: 10px 14px;
+      color: #c0392b;
+      font-size: 0.85rem;
+      font-weight: 600;
+      text-align: center;
+      margin-top: 12px;
+      display: none;
+    }
+    .error-msg.show { display: block; }
+  </style>
+</head>
+<body>
+<div class="container">
+
+  <p class="page-title">✨ 空と約束 倉本千奈</p>
+  <p class="page-subtitle">固有札 ダメージシミュレータ</p>
+
+  <div class="card">
+    <p class="card-title">計算式</p>
+    <div class="formula-box">
+      <div class="formula-text">(11y + x) × (1.5 + 0.1y) × z / 100</div>
+      <div class="formula-desc">
+        x = 追加ダメージ値　y = スタック数　z = 倍率(%)
+      </div>
+    </div>
+
+    <div class="param-list">
+      <div class="param-row">
+        <div class="param-badge">x</div>
+        <div class="param-info">
+          <div class="param-label">追加ダメージ値 (x)</div>
+          <input class="param-input" id="input-x" type="number" placeholder="例: 100" min="0" step="1" inputmode="decimal">
+        </div>
+      </div>
+      <div class="param-row">
+        <div class="param-badge">y</div>
+        <div class="param-info">
+          <div class="param-label">スタック数 (y)</div>
+          <input class="param-input" id="input-y" type="number" placeholder="例: 5" min="0" step="1" inputmode="decimal">
+        </div>
+      </div>
+      <div class="param-row">
+        <div class="param-badge">z</div>
+        <div class="param-info">
+          <div class="param-label">倍率 % (z)</div>
+          <input class="param-input" id="input-z" type="number" placeholder="例: 150" min="0" step="1" inputmode="decimal">
+        </div>
+      </div>
+    </div>
+
+    <button class="btn-calc" onclick="calculate()">計算する</button>
+    <div class="error-msg" id="error-msg">x・y・z に有効な数値を入力してください</div>
+  </div>
+
+  <!-- Result -->
+  <div class="result-card" id="result-card">
+    <div class="result-label">計算結果</div>
+    <div class="result-value" id="result-value">—</div>
+    <div class="result-unit">ダメージ</div>
+    <div class="result-breakdown" id="result-breakdown"></div>
+  </div>
+
+</div>
+<script>
+  function calculate() {
+    const xRaw = document.getElementById('input-x').value.trim();
+    const yRaw = document.getElementById('input-y').value.trim();
+    const zRaw = document.getElementById('input-z').value.trim();
+    const errEl = document.getElementById('error-msg');
+    const resCard = document.getElementById('result-card');
+
+    const x = parseFloat(xRaw);
+    const y = parseFloat(yRaw);
+    const z = parseFloat(zRaw);
+
+    if ([x, y, z].some(v => isNaN(v))) {
+      errEl.classList.add('show');
+      resCard.classList.remove('show');
+      return;
+    }
+    errEl.classList.remove('show');
+
+    const inner  = 11 * y + x;
+    const mult   = 1.5 + 0.1 * y;
+    const result = inner * mult * z / 100;
+
+    const fmt = v => Number.isInteger(v) ? v.toLocaleString() : v.toLocaleString(undefined, { maximumFractionDigits: 2 });
+
+    document.getElementById('result-value').textContent = fmt(result);
+    document.getElementById('result-breakdown').innerHTML =
+      `(11×${y} + ${x}) = ${fmt(inner)}\n` +
+      `(1.5 + 0.1×${y}) = ${fmt(mult)}\n` +
+      `${fmt(inner)} × ${fmt(mult)} × ${z} / 100\n` +
+      `= ${fmt(result)}`;
+
+    resCard.classList.add('show');
+  }
+
+  // Enter キーで計算
+  document.querySelectorAll('.param-input').forEach(el => {
+    el.addEventListener('keydown', e => { if (e.key === 'Enter') calculate(); });
+  });
+</script>
+</body>
+</html>
